@@ -1,16 +1,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Для простоты используем SQLite
-DATABASE_URL = "sqlite:///./catalog.db"
+DATABASE_URL = 'postgresql://postgres:laGS5XRv9nWAQ7TO@db.maodicpwdcgrmvcfuzdz.supabase.co:5432/postgres'
 
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}  # нужно для SQLite
-)
+engine = create_engine(DATABASE_URL, connect_args={"sslmode": "require"})
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 Base = declarative_base()
 
-# Dependency для FastAPI
 def get_db():
     db = SessionLocal()
     try:

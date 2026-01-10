@@ -68,12 +68,7 @@ def remove_cart_item(db: Session, item_id: int):
         db.commit()
     return item
 
-def delete_product(db: Session, product_id: int):
-    product = db.query(models.Product).filter(models.Product.id == product_id).first()
-    if product:
-        db.delete(product)
-        db.commit()
-    return product
+
 
 def get_products(db: Session, skip: int = 0, limit: int = 10,
                  search: str = None, category: str = None,
