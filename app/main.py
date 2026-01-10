@@ -1,18 +1,34 @@
-from fastapi import FastAPI
-from .database import Base, engine
-from .models import Product, Cart, CartItem
-from fastapi import Depends
-from sqlalchemy.orm import Session
-from .database import get_db
-from . import crud, schemas, models
 from typing import List, Optional
+from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from . import models, schemas, crud
+from .database import SessionLocal, engine
 
-# Создаем таблицы в базе
-Base.metadata.create_all(bind=engine)
-
+# Создаём таблицы при запуске (если их ещё нет)
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Product Catalog API")
 
+# === CORS ===
+origins = ["*"]  # Можно указать список доменов, напр. ["http://localhost:3000"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# === Dependency для работы с БД ===
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# === Корневой роут ===
 @app.get("/")
 def root():
     return {"status": "ok"}
@@ -23,11 +39,15 @@ def root():
 def list_products(skip: int = 0, limit: int = 10,
                   search: Optional[str] = None,
                   category: Optional[str] = None,
+                  min_price: Optional[float] = None,
+                  max_price: Optional[float] = None,
                   sort_by: str = "name",
                   order: str = "asc",
                   db: Session = Depends(get_db)):
     return crud.get_products(db, skip=skip, limit=limit,
                              search=search, category=category,
+                             min_price=min_price,
+                             max_price=max_price,
                              sort_by=sort_by, order=order)
 
 @app.get("/api/products/{product_id}/", response_model=schemas.ProductDetail)
@@ -60,3 +80,12 @@ def delete_cart(item_id: int, db: Session = Depends(get_db)):
     if not removed_item:
         raise HTTPException(status_code=404, detail="Item not found")
     return {"detail": "Item removed"}
+
+@app.delete("/api/products/{product_id}/")
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db.delete(product)
+    db.commit()
+    return {"detail": "Product deleted"}   
