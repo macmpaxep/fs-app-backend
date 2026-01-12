@@ -6,7 +6,11 @@ SESSION_ID = "demo-session"
 
 @router.post("/cart/")
 def add_item(product_id: int, quantity: int):
-    return add_to_cart(SESSION_ID, product_id, quantity)
+    try:
+        item = add_to_cart(SESSION_ID, product_id, quantity)
+        return {"status": "success", "item": item}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @router.get("/cart/")
 def list_cart():
