@@ -1,16 +1,27 @@
 from fastapi import APIRouter
 from app.supabase_client import add_to_cart, get_cart, update_cart_item, delete_cart_item
+from pydantic import BaseModel
 
 router = APIRouter(tags=["Cart"])
 SESSION_ID = "demo-session"
 
+class CartItem(BaseModel):
+    product_id: int
+    quantity: int
+
 @router.post("/cart/")
-def add_item(product_id: int, quantity: int):
+def add_item(item: CartItem):
     try:
-        item = add_to_cart(SESSION_ID, product_id, quantity)
-        return {"status": "success", "item": item}
+        result = add_to_cart(SESSION_ID, item.product_id, item.quantity)
+        return {
+            "status": "success",
+            "item": result
+        }
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 @router.get("/cart/")
 def list_cart():
