@@ -6,7 +6,7 @@ app = FastAPI(title="FS Catalog API")
 
 origins = [
     "http://localhost:3000",       # фронтенд на локальном хосте
-    "https://your-frontend-domain.com"  # или фронтенд на Render/Netlify/Vercel
+    "https://fs-app-frontend.vercel.app/"  # или фронтенд на Render/Netlify/Vercel
 ]
 
 app.add_middleware(
